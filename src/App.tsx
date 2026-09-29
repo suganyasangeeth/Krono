@@ -49,6 +49,7 @@ const STORAGE_KEYS = {
   TASKS: 'krono_tasks_v1',
   SESSIONS: 'krono_sessions_v1',
   THEME: 'krono_theme_v1',
+  WIDGET_MODE: 'krono_widget_mode_v1',
 };
 
 function getTodayStr(): string {
@@ -238,28 +239,87 @@ export default function App() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isWidgetStudioOpen, setIsWidgetStudioOpen] = useState(false);
 
-  // iOS Task-List-Only Widget Mode (triggered via ?widget=small|medium|large or in-app launcher)
+  // iOS Task-List-Only Widget Mode (triggered via ?widget=..., #widget-..., or persisted localStorage)
   const [widgetModeSize, setWidgetModeSize] = useState<WidgetSize | null>(() => {
     if (typeof window === 'undefined') return null;
     const params = new URLSearchParams(window.location.search);
-    const w = params.get('widget')?.toLowerCase();
-    if (w === 'small' || w === 'medium' || w === 'large') {
-      return w;
+    const q = params.get('widget')?.toLowerCase();
+    if (q === 'small' || q === 'medium' || q === 'large') {
+      return q;
+    }
+    const hash = window.location.hash.replace('#widget-', '').toLowerCase();
+    if (hash === 'small' || hash === 'medium' || hash === 'large') {
+      return hash as WidgetSize;
+    }
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.WIDGET_MODE)?.toLowerCase();
+      if (saved === 'small' || saved === 'medium' || saved === 'large') {
+        return saved as WidgetSize;
+      }
+    } catch {
+      // ignore storage error
     }
     return null;
   });
 
-  const handleSetWidgetMode = useCallback((size: WidgetSize | null) => {
-    setWidgetModeSize(size);
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      if (size) {
-        url.searchParams.set('widget', size);
-      } else {
-        url.searchParams.delete('widget');
+  // Sync URL, localStorage, and iOS Home Screen meta tags whenever Widget Mode changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    const existingManifest = document.querySelector('link[rel="manifest"]');
+
+    if (widgetModeSize) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.WIDGET_MODE, widgetModeSize);
+      } catch {
+        // ignore
+      }
+      url.searchParams.set('widget', widgetModeSize);
+      url.hash = `widget-${widgetModeSize}`;
+      window.history.replaceState({}, '', url.toString());
+
+      const sizeLabel =
+        widgetModeSize === 'small'
+          ? 'Small'
+          : widgetModeSize === 'medium'
+          ? 'Medium'
+          : 'Large';
+      document.title = `Krono ${sizeLabel} Widget`;
+      if (appleTitleMeta) {
+        appleTitleMeta.setAttribute('content', `Krono ${sizeLabel}`);
+      }
+      // Remove manifest link while in Widget Mode so iOS Safari "Add to Home Screen"
+      // saves the exact /?widget=<size>#widget-<size> URL instead of overriding with start_url: "/"
+      if (existingManifest) {
+        existingManifest.remove();
+      }
+    } else {
+      try {
+        localStorage.removeItem(STORAGE_KEYS.WIDGET_MODE);
+      } catch {
+        // ignore
+      }
+      url.searchParams.delete('widget');
+      if (url.hash.startsWith('#widget-')) {
+        url.hash = '';
       }
       window.history.replaceState({}, '', url.toString());
+      document.title = 'Krono — Offline PWA Task & Focus Planner';
+      if (appleTitleMeta) {
+        appleTitleMeta.setAttribute('content', 'Krono');
+      }
+      if (!document.querySelector('link[rel="manifest"]')) {
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = '/manifest.webmanifest';
+        document.head.appendChild(link);
+      }
     }
+  }, [widgetModeSize]);
+
+  const handleSetWidgetMode = useCallback((size: WidgetSize | null) => {
+    setWidgetModeSize(size);
   }, []);
 
   // Focus Timer linked task
@@ -853,6 +913,14 @@ export default function App() {
 
         {/* Zone 3: Primary Actions */}
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => handleSetWidgetMode('medium')}
+            className="min-h-[44px] px-3 py-2 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 hover:bg-sky-500/25 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            title="Switch to Task-List-Only Widget Mode"
+          >
+            <LayoutGrid className="w-4 h-4 shrink-0" />
+            <span>Widget View</span>
+          </button>
           <PWAInstallButton />
           <button
             onClick={() => setDarkMode((prev) => !prev)}
