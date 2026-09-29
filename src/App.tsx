@@ -16,6 +16,7 @@ import {
   Trash2,
   Search,
   LayoutGrid,
+  Eye,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import {
@@ -37,6 +38,7 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { FocusTimerPanel } from './components/FocusTimerPanel';
 import { CloudBackupModal } from './components/CloudBackupModal';
 import { TaskSheetModal } from './components/TaskSheetModal';
+import { TaskDetailModal } from './components/TaskDetailModal';
 import {
   IOSWidgetStandalone,
   IOSWidgetStudioModal,
@@ -232,6 +234,7 @@ export default function App() {
   // Modals & sheets
   const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
+  const [viewingTask, setViewingTask] = useState<TaskItem | null>(null);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isWidgetStudioOpen, setIsWidgetStudioOpen] = useState(false);
 
@@ -751,34 +754,48 @@ export default function App() {
   // Dedicated Task-List-Only iOS Widget Form when launched via ?widget=small|medium|large
   if (widgetModeSize) {
     return (
-      <IOSWidgetStandalone
-        initialSize={widgetModeSize}
-        tasks={tasks}
-        onToggleComplete={handleToggleComplete}
-        onQuickAdd={handleWidgetQuickAdd}
-        onExitWidgetMode={() => handleSetWidgetMode(null)}
-        onChangeSize={(nextSize) => handleSetWidgetMode(nextSize)}
-      />
+      <>
+        <IOSWidgetStandalone
+          initialSize={widgetModeSize}
+          tasks={tasks}
+          onToggleComplete={handleToggleComplete}
+          onViewTask={(task) => setViewingTask(task)}
+          onQuickAdd={handleWidgetQuickAdd}
+          onExitWidgetMode={() => handleSetWidgetMode(null)}
+          onChangeSize={(nextSize) => handleSetWidgetMode(nextSize)}
+        />
+        <TaskDetailModal
+          task={viewingTask}
+          onClose={() => setViewingTask(null)}
+          onToggleComplete={handleToggleComplete}
+          onEdit={(task) => {
+            setViewingTask(null);
+            handleSetWidgetMode(null);
+            setEditingTask(task);
+            setIsTaskSheetOpen(true);
+          }}
+        />
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-24 md:pb-12">
-      {/* Top Bar Contract: Zone 1 (Single Brand Title) — Zone 2 (Nav Links) — Zone 3 (1-2 Actions) */}
-      <header className="sticky top-0 z-30 h-14 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between">
-        {/* Zone 1: Single text element wordmark */}
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-32 md:pb-12">
+      {/* Top Bar Contract: Safe-Area Top Inset for iPhone 11 Notch */}
+      <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 pt-[max(env(safe-area-inset-top),0.65rem)] pb-2.5 min-h-[60px] flex items-center justify-between gap-2">
+        {/* Zone 1: Single text element wordmark (Clearly visible below iPhone notch) */}
         <a
           href="#top"
           onClick={(e) => {
             e.preventDefault();
             setActiveView('all');
           }}
-          className="text-xl font-bold tracking-tight font-display text-slate-900 dark:text-white"
+          className="text-2xl font-bold tracking-tight font-display text-slate-900 dark:text-white shrink-0"
         >
           Krono
         </a>
 
-        {/* Zone 2: 4-5 Clean Text Navigation Links */}
+        {/* Zone 2: Clean Text Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
           <button
             onClick={() => setActiveView('all')}
@@ -834,8 +851,8 @@ export default function App() {
           </button>
         </nav>
 
-        {/* Zone 3: 1-2 Primary Actions */}
-        <div className="flex items-center gap-2">
+        {/* Zone 3: Primary Actions */}
+        <div className="flex items-center gap-2 shrink-0">
           <PWAInstallButton />
           <button
             onClick={() => setDarkMode((prev) => !prev)}
@@ -843,7 +860,7 @@ export default function App() {
             aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
           </button>
         </div>
       </header>
@@ -903,9 +920,9 @@ export default function App() {
       )}
 
       {/* Main Content Container */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 pt-6">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-3.5 sm:px-8 pt-4 sm:pt-6">
         {/* Compact Workspace Summary Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-slate-200/80 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3.5 pb-5 border-b border-slate-200/80 dark:border-slate-800">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white">
               {activeView === 'all' && 'Priority Task Queue'}
@@ -913,32 +930,32 @@ export default function App() {
               {activeView === 'recurring' && 'Automated Recurring Reminders'}
               {activeView === 'focus' && 'Deep Work Focus Studio'}
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 tabular-nums">
               <span>{stats.active} active</span>
-              <span className="mx-2" aria-hidden="true">·</span>
+              <span className="mx-1.5" aria-hidden="true">·</span>
               <span>{stats.highPriorityLeft} high priority</span>
-              <span className="mx-2" aria-hidden="true">·</span>
-              <span>{stats.recurringCount} recurring routines</span>
-              <span className="mx-2" aria-hidden="true">·</span>
-              <span>{stats.completed} completed</span>
+              <span className="mx-1.5" aria-hidden="true">·</span>
+              <span>{stats.recurringCount} recurring</span>
+              <span className="mx-1.5" aria-hidden="true">·</span>
+              <span>{stats.completed} done</span>
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={() => setIsWidgetStudioOpen(true)}
-              className="min-h-[44px] flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+              className="min-h-[46px] flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
             >
               <LayoutGrid className="w-4 h-4 text-sky-500 shrink-0" />
-              <span>iOS Widgets (3 Sizes)</span>
+              <span>Widgets</span>
             </button>
 
             <button
               onClick={() => setIsBackupModalOpen(true)}
-              className="min-h-[44px] flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+              className="min-h-[46px] flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
             >
               <Cloud className="w-4 h-4 text-sky-500 shrink-0" />
-              <span>{user ? 'Drive & iCloud Sync' : 'Backup & Sync'}</span>
+              <span>{user ? 'Synced' : 'Backup'}</span>
             </button>
 
             <button
@@ -946,7 +963,7 @@ export default function App() {
                 setEditingTask(null);
                 setIsTaskSheetOpen(true);
               }}
-              className="min-h-[44px] flex items-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2 text-xs font-semibold text-slate-950 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
+              className="min-h-[46px] flex items-center justify-center gap-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-950 shadow-xs transition-colors cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
               <span>New Task</span>
@@ -955,42 +972,42 @@ export default function App() {
         </div>
 
         {/* Responsive 12-Column Grid: Left 7 cols (Task Queue), Right 5 cols (Focus Timer) */}
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* Task Management Column */}
           <div
-            className={`lg:col-span-7 space-y-5 ${
+            className={`lg:col-span-7 space-y-4 ${
               activeView === 'focus' ? 'hidden lg:block' : 'block'
             }`}
           >
-            {/* Quick-Add Bar */}
+            {/* Full-Width Mobile Quick-Add Bar (16px text-base prevents iOS zoom) */}
             <form
               onSubmit={handleQuickAdd}
-              className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-2.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shadow-2xs"
+              className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3 flex flex-col gap-2.5 shadow-2xs"
             >
               <input
                 type="text"
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
-                placeholder="Quick add a task (drag rows below to reprioritize)..."
-                className="flex-1 min-h-[44px] px-3 text-sm bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+                placeholder="Type a new task here..."
+                className="w-full min-h-[48px] px-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/70 dark:border-slate-800 text-base text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
-              <div className="flex items-center gap-1.5 px-1 sm:px-0">
+              <div className="grid grid-cols-3 gap-2">
                 <select
                   aria-label="Quick priority"
                   value={quickPriority}
                   onChange={(e) => setQuickPriority(e.target.value as PriorityLevel)}
-                  className="min-h-[40px] rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 text-xs font-medium text-slate-700 dark:text-slate-300"
+                  className="min-h-[44px] w-full rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200"
                 >
                   <option value="high">High Priority</option>
                   <option value="medium">Medium</option>
-                  <option value="low">Low</option>
+                  <option value="low">Low Priority</option>
                 </select>
 
                 <select
                   aria-label="Quick recurrence"
                   value={quickRecurrence}
                   onChange={(e) => setQuickRecurrence(e.target.value as RecurrencePattern)}
-                  className="min-h-[40px] rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 text-xs font-medium text-slate-700 dark:text-slate-300"
+                  className="min-h-[44px] w-full rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200"
                 >
                   <option value="none">One-time</option>
                   <option value="daily">Daily</option>
@@ -1001,9 +1018,9 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="min-h-[40px] px-4 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+                  className="min-h-[44px] w-full px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap"
                 >
-                  Add
+                  + Add Task
                 </button>
               </div>
             </form>
@@ -1041,13 +1058,13 @@ export default function App() {
             )}
 
             {/* Filter & Search Bar (Interactive Segmented Controls) */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-1 p-1 bg-slate-200/70 dark:bg-slate-900 rounded-xl overflow-x-auto">
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/70 dark:bg-slate-900 rounded-xl overflow-x-auto">
                 {(['all', 'active', 'completed'] as const).map((st) => (
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`min-h-[38px] px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[40px] px-3.5 py-1.5 text-sm font-bold rounded-lg capitalize transition-colors whitespace-nowrap cursor-pointer ${
                       statusFilter === st
                         ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -1061,9 +1078,9 @@ export default function App() {
                   <button
                     key={cat}
                     onClick={() => setCategoryFilter(cat)}
-                    className={`min-h-[38px] px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[40px] px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
                       categoryFilter === cat
-                        ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 font-semibold'
+                        ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 font-bold'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -1072,30 +1089,30 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="relative min-w-[180px]">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="relative w-full">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter tasks..."
-                  className="w-full min-h-[40px] pl-9 pr-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  placeholder="Filter tasks by title or notes..."
+                  className="w-full min-h-[46px] pl-10 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-base text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
             </div>
 
-            {/* Drag-and-Drop Prioritized Task List */}
+            {/* Drag-and-Drop Prioritized Task List (Full-Width Mobile Cards) */}
             <div
               role="list"
               aria-label="Prioritized task list"
-              className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-xs"
+              className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-200/70 dark:divide-slate-800 overflow-hidden shadow-xs"
             >
               {filteredTasks.length === 0 ? (
-                <div className="p-12 text-center">
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <div className="p-10 text-center">
+                  <p className="text-base font-bold text-slate-700 dark:text-slate-300">
                     No tasks match this view
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Add a new task above or switch filters to see all items.
                   </p>
                 </div>
@@ -1140,7 +1157,7 @@ export default function App() {
                         setDraggedTaskId(null);
                         setDragOverTaskId(null);
                       }}
-                      className={`group flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-3.5 transition-colors ${
+                      className={`p-4 sm:p-5 transition-colors flex flex-col gap-3 ${
                         isBeingDragged ? 'opacity-40 bg-slate-100 dark:bg-slate-800' : ''
                       } ${
                         isDragTarget
@@ -1148,162 +1165,190 @@ export default function App() {
                           : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
                       }`}
                     >
-                      {/* Drag Handle + Priority Rank Index */}
-                      <div
-                        className="min-h-[44px] flex items-center gap-1 text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing select-none shrink-0"
-                        title="Drag to reorder task priority"
-                      >
-                        <GripVertical className="w-4 h-4" />
-                        <span className="text-[11px] font-mono tabular-nums w-4 text-center">
-                          {idx + 1}
-                        </span>
-                      </div>
-
-                      {/* Accessible 44x44px Completion Checkbox */}
-                      <button
-                        onClick={() => handleToggleComplete(task)}
-                        aria-label={
-                          task.completed
-                            ? `Mark "${task.title}" as incomplete`
-                            : `Complete "${task.title}"`
-                        }
-                        className="min-h-[44px] min-w-[44px] -ml-1 flex items-center justify-center shrink-0 cursor-pointer"
-                      >
-                        <span
-                          className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-colors ${
+                      {/* Top Section: Checkbox + Full-Width Title, Notes & Metadata */}
+                      <div className="flex items-start gap-3 w-full">
+                        {/* Accessible 44x44px Completion Checkbox */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleComplete(task)}
+                          aria-label={
                             task.completed
-                              ? 'bg-emerald-500 border-emerald-500 text-slate-950'
-                              : task.priority === 'high'
-                              ? 'border-rose-500/80 hover:bg-rose-500/10'
-                              : task.priority === 'medium'
-                              ? 'border-sky-500/80 hover:bg-sky-500/10'
-                              : 'border-slate-300 dark:border-slate-700 hover:border-slate-400'
-                          }`}
+                              ? `Mark "${task.title}" as incomplete`
+                              : `Complete "${task.title}"`
+                          }
+                          className="min-h-[44px] min-w-[44px] -ml-1 -mt-1 flex items-center justify-center shrink-0 cursor-pointer"
                         >
-                          {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                        </span>
-                      </button>
-
-                      {/* Task Title, Notes & Zero-Pill Unboxed Metadata */}
-                      <div className="flex-1 min-w-0 pt-1">
-                        <p
-                          className={`text-sm font-semibold leading-snug break-words ${
-                            task.completed
-                              ? 'line-through text-slate-400 dark:text-slate-500'
-                              : 'text-slate-900 dark:text-slate-100'
-                          }`}
-                        >
-                          {task.title}
-                        </p>
-
-                        {task.notes && (
-                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                            {task.notes}
-                          </p>
-                        )}
-
-                        {/* Zero-Pill Unboxed Metadata with Clean Typographic Separators (·) */}
-                        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
                           <span
-                            className={
-                              task.priority === 'high' && !task.completed
-                                ? 'font-semibold text-rose-600 dark:text-rose-400'
-                                : task.priority === 'medium' && !task.completed
-                                ? 'font-medium text-sky-600 dark:text-sky-400'
-                                : ''
-                            }
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-colors ${
+                              task.completed
+                                ? 'bg-emerald-500 border-emerald-500 text-slate-950'
+                                : task.priority === 'high'
+                                ? 'border-rose-500 hover:bg-rose-500/10'
+                                : task.priority === 'medium'
+                                ? 'border-sky-500 hover:bg-sky-500/10'
+                                : 'border-slate-300 dark:border-slate-600 hover:border-slate-400'
+                            }`}
                           >
-                            {formatPriorityLabel(task.priority)}
+                            {task.completed && <Check className="w-4 h-4 stroke-[3]" />}
                           </span>
-                          <span aria-hidden="true">·</span>
-                          <span>{task.category}</span>
-                          <span aria-hidden="true">·</span>
-                          <span>
-                            {task.dueDate === getTodayStr() ? 'Due Today' : `Due ${task.dueDate}`}
-                          </span>
-                          {task.reminderTime && (
-                            <>
-                              <span aria-hidden="true">·</span>
-                              <span>Reminder {task.reminderTime}</span>
-                            </>
+                        </button>
+
+                        {/* Full-Width Task Text (Tapping opens Read-Only Task Detail Dialog) */}
+                        <div
+                          onClick={() => setViewingTask(task)}
+                          className="flex-1 min-w-0 cursor-pointer"
+                        >
+                          <p
+                            className={`text-base sm:text-lg font-bold leading-snug break-words ${
+                              task.completed
+                                ? 'line-through text-slate-400 dark:text-slate-500'
+                                : 'text-slate-900 dark:text-slate-100'
+                            }`}
+                          >
+                            {task.title}
+                          </p>
+
+                          {task.notes && (
+                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 line-clamp-2 break-words leading-relaxed">
+                              {task.notes}
+                            </p>
                           )}
-                          {task.recurrence !== 'none' && (
-                            <>
-                              <span aria-hidden="true">·</span>
-                              <span className="text-indigo-600 dark:text-indigo-400 font-medium capitalize">
-                                Repeats {task.recurrence}
-                              </span>
-                            </>
-                          )}
-                          <span aria-hidden="true">·</span>
-                          <span>
-                            {task.completedPomodoros}/{task.estimatedPomodoros} focus
-                          </span>
+
+                          {/* Zero-Pill Unboxed Metadata with Clean Typographic Separators (·) */}
+                          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                            <span
+                              className={
+                                task.priority === 'high' && !task.completed
+                                  ? 'font-bold text-rose-600 dark:text-rose-400'
+                                  : task.priority === 'medium' && !task.completed
+                                  ? 'font-semibold text-sky-600 dark:text-sky-400'
+                                  : 'font-medium'
+                              }
+                            >
+                              {formatPriorityLabel(task.priority)}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span>{task.category}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>
+                              {task.dueDate === getTodayStr() ? 'Due Today' : `Due ${task.dueDate}`}
+                            </span>
+                            {task.reminderTime && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span>Reminder {task.reminderTime}</span>
+                              </>
+                            )}
+                            {task.recurrence !== 'none' && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span className="text-indigo-600 dark:text-indigo-400 font-semibold capitalize">
+                                  Repeats {task.recurrence}
+                                </span>
+                              </>
+                            )}
+                            <span aria-hidden="true">·</span>
+                            <span>
+                              {task.completedPomodoros}/{task.estimatedPomodoros} focus
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Touch & Keyboard Action Controls */}
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        {!task.completed && (
-                          <button
-                            onClick={() => {
-                              setActiveFocusTaskId(task.clientId);
-                              if (window.innerWidth < 1024) {
-                                setActiveView('focus');
-                              }
-                            }}
-                            className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl transition-colors cursor-pointer ${
-                              isFocused
-                                ? 'text-sky-500 bg-sky-500/10'
-                                : 'text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
-                            aria-label="Focus on this task"
-                            title="Link to Focus Timer"
+                      {/* Bottom Action Bar: Full Width so it NEVER squeezes the Task Title */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/70 flex flex-wrap items-center justify-between gap-2">
+                        {/* Left: Drag Handle + Rank + Read-Only View Button */}
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="min-h-[40px] px-2 flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 cursor-grab active:cursor-grabbing select-none"
+                            title="Drag to reorder task priority"
                           >
-                            <Timer className="w-4 h-4" />
+                            <GripVertical className="w-4 h-4" />
+                            <span className="text-xs font-mono font-bold tabular-nums">
+                              #{idx + 1}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setViewingTask(task)}
+                            className="min-h-[40px] px-3 py-1.5 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 hover:bg-sky-500/25 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                            aria-label={`View task "${task.title}"`}
+                          >
+                            <Eye className="w-4 h-4 shrink-0" />
+                            <span>View</span>
                           </button>
-                        )}
+                        </div>
 
-                        <button
-                          onClick={() => moveTaskStep(task.clientId, -1)}
-                          disabled={idx === 0}
-                          className="min-h-[44px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-25 cursor-pointer"
-                          aria-label="Move task higher in priority"
-                          title="Move up priority"
-                        >
-                          <ArrowUp className="w-4 h-4" />
-                        </button>
+                        {/* Right: Focus, Priority Up/Down, Edit, Delete */}
+                        <div className="flex items-center gap-1">
+                          {!task.completed && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveFocusTaskId(task.clientId);
+                                if (window.innerWidth < 1024) {
+                                  setActiveView('focus');
+                                }
+                              }}
+                              className={`min-h-[42px] px-2.5 rounded-xl flex items-center gap-1 text-xs font-semibold transition-colors cursor-pointer ${
+                                isFocused
+                                  ? 'text-sky-500 bg-sky-500/15'
+                                  : 'text-slate-500 dark:text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                              }`}
+                              aria-label="Focus on this task"
+                              title="Link to Focus Timer"
+                            >
+                              <Timer className="w-4 h-4" />
+                              <span className="hidden sm:inline">Focus</span>
+                            </button>
+                          )}
 
-                        <button
-                          onClick={() => moveTaskStep(task.clientId, 1)}
-                          disabled={idx === filteredTasks.length - 1}
-                          className="min-h-[44px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-25 cursor-pointer"
-                          aria-label="Move task lower in priority"
-                          title="Move down priority"
-                        >
-                          <ArrowDown className="w-4 h-4" />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => moveTaskStep(task.clientId, -1)}
+                            disabled={idx === 0}
+                            className="min-h-[42px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-25 cursor-pointer"
+                            aria-label="Move task higher in priority"
+                            title="Move up priority"
+                          >
+                            <ArrowUp className="w-4 h-4" />
+                          </button>
 
-                        <button
-                          onClick={() => {
-                            setEditingTask(task);
-                            setIsTaskSheetOpen(true);
-                          }}
-                          className="min-h-[44px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
-                          aria-label="Edit task"
-                          title="Edit task & schedule"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => moveTaskStep(task.clientId, 1)}
+                            disabled={idx === filteredTasks.length - 1}
+                            className="min-h-[42px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-25 cursor-pointer"
+                            aria-label="Move task lower in priority"
+                            title="Move down priority"
+                          >
+                            <ArrowDown className="w-4 h-4" />
+                          </button>
 
-                        <button
-                          onClick={() => handleDeleteTask(task.clientId)}
-                          className="min-h-[44px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-500 cursor-pointer"
-                          aria-label="Delete task"
-                          title="Delete task"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingTask(task);
+                              setIsTaskSheetOpen(true);
+                            }}
+                            className="min-h-[42px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                            aria-label="Edit task"
+                            title="Edit task & schedule"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTask(task.clientId)}
+                            className="min-h-[42px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-500 dark:text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                            aria-label="Delete task"
+                            title="Delete task"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1329,71 +1374,82 @@ export default function App() {
         </div>
       </main>
 
-      {/* Mobile Fixed Bottom Thumb-Zone Navigation Bar (10_mobile_touch_apps.md Pattern 1) */}
+      {/* Mobile Fixed Bottom Thumb-Zone Navigation Bar (Safe-Area Aware on iPhone 11) */}
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-5 items-center px-2"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full max-w-[100vw] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-5 items-center px-1 pt-1.5 pb-[max(env(safe-area-inset-bottom),0.65rem)]"
       >
         <button
           onClick={() => setActiveView('all')}
-          className={`min-h-[44px] flex flex-col items-center justify-center cursor-pointer ${
+          className={`min-h-[48px] min-w-0 flex flex-col items-center justify-center cursor-pointer ${
             activeView === 'all' || activeView === 'today'
-              ? 'text-sky-500'
-              : 'text-slate-500 dark:text-slate-400'
+              ? 'text-sky-500 font-bold'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
           }`}
         >
-          <Check className="w-5 h-5" />
-          <span className="text-[10px] font-medium tracking-tight mt-0.5">Tasks</span>
+          <Check className="w-5 h-5 shrink-0" />
+          <span className="text-[11px] tracking-tight mt-0.5 truncate">Tasks</span>
         </button>
 
         <button
           onClick={() => setActiveView('recurring')}
-          className={`min-h-[44px] flex flex-col items-center justify-center cursor-pointer ${
+          className={`min-h-[48px] min-w-0 flex flex-col items-center justify-center cursor-pointer ${
             activeView === 'recurring'
-              ? 'text-sky-500'
-              : 'text-slate-500 dark:text-slate-400'
+              ? 'text-sky-500 font-bold'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
           }`}
         >
-          <Repeat className="w-5 h-5" />
-          <span className="text-[10px] font-medium tracking-tight mt-0.5">Recurring</span>
+          <Repeat className="w-5 h-5 shrink-0" />
+          <span className="text-[11px] tracking-tight mt-0.5 truncate">Recurring</span>
         </button>
 
         <button
           onClick={() => setActiveView('focus')}
-          className={`min-h-[44px] flex flex-col items-center justify-center cursor-pointer ${
+          className={`min-h-[48px] min-w-0 flex flex-col items-center justify-center cursor-pointer ${
             activeView === 'focus'
-              ? 'text-sky-500'
-              : 'text-slate-500 dark:text-slate-400'
+              ? 'text-sky-500 font-bold'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
           }`}
         >
-          <Timer className="w-5 h-5" />
-          <span className="text-[10px] font-medium tracking-tight mt-0.5">Focus</span>
+          <Timer className="w-5 h-5 shrink-0" />
+          <span className="text-[11px] tracking-tight mt-0.5 truncate">Focus</span>
         </button>
 
         <button
           onClick={() => setIsWidgetStudioOpen(true)}
-          className="min-h-[44px] flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 cursor-pointer"
+          className="min-h-[48px] min-w-0 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 font-medium cursor-pointer"
         >
-          <LayoutGrid className="w-5 h-5" />
-          <span className="text-[10px] font-medium tracking-tight mt-0.5">Widgets</span>
+          <LayoutGrid className="w-5 h-5 shrink-0" />
+          <span className="text-[11px] tracking-tight mt-0.5 truncate">Widgets</span>
         </button>
 
         <button
           onClick={() => setIsBackupModalOpen(true)}
-          className="min-h-[44px] flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 cursor-pointer"
+          className="min-h-[48px] min-w-0 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 font-medium cursor-pointer"
         >
-          <Cloud className="w-5 h-5" />
-          <span className="text-[10px] font-medium tracking-tight mt-0.5">Sync</span>
+          <Cloud className="w-5 h-5 shrink-0" />
+          <span className="text-[11px] tracking-tight mt-0.5 truncate">Sync</span>
         </button>
       </nav>
 
       {/* Modals & Sheets */}
+      <TaskDetailModal
+        task={viewingTask}
+        onClose={() => setViewingTask(null)}
+        onToggleComplete={handleToggleComplete}
+        onEdit={(task) => {
+          setEditingTask(task);
+          setIsTaskSheetOpen(true);
+        }}
+      />
+
       <IOSWidgetStudioModal
         isOpen={isWidgetStudioOpen}
         onClose={() => setIsWidgetStudioOpen(false)}
         tasks={tasks}
         userUid={user ? user.uid : null}
         onToggleComplete={handleToggleComplete}
+        onViewTask={(task) => setViewingTask(task)}
         onQuickAdd={handleWidgetQuickAdd}
         onLaunchWidgetMode={(size) => handleSetWidgetMode(size)}
       />

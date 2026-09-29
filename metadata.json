@@ -2,5 +2,7 @@
   "name": "Krono — Offline PWA Task & Focus Planner",
   "description": "Intuitive offline-first PWA to-do list with drag-and-drop task prioritization, dark mode, automated recurring task reminders, Pomodoro focus timer, and Google Drive & iCloud backup.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
