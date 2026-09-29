@@ -43,6 +43,29 @@ export default defineConfig(() => {
               purpose: 'maskable',
             },
           ],
+          shortcuts: [
+            {
+              name: 'Small Task Widget (2×2)',
+              short_name: 'Small Widget',
+              description: 'Compact top-priority task list widget',
+              url: '/?widget=small',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+            },
+            {
+              name: 'Medium Task Widget (4×2)',
+              short_name: 'Medium Widget',
+              description: 'Wide task list widget for Today & High Priority',
+              url: '/?widget=medium',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+            },
+            {
+              name: 'Large Task Widget (4×4)',
+              short_name: 'Large Widget',
+              description: 'Full task list widget with instant check-off',
+              url: '/?widget=large',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+            },
+          ],
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],

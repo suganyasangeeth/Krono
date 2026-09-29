@@ -15,7 +15,7 @@ import {
   Pencil,
   Trash2,
   Search,
-  Sparkles,
+  LayoutGrid,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import {
@@ -30,7 +30,6 @@ import {
   googleSignIn,
   logout,
   getIdToken,
-  getAccessToken,
 } from './lib/firebase';
 import { soundEngine } from './lib/sound';
 import { PWAInstallButton } from './components/PWAInstallButton';
@@ -38,6 +37,11 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { FocusTimerPanel } from './components/FocusTimerPanel';
 import { CloudBackupModal } from './components/CloudBackupModal';
 import { TaskSheetModal } from './components/TaskSheetModal';
+import {
+  IOSWidgetStandalone,
+  IOSWidgetStudioModal,
+  WidgetSize,
+} from './components/IOSWidgetView';
 
 const STORAGE_KEYS = {
   TASKS: 'krono_tasks_v1',
@@ -229,6 +233,31 @@ export default function App() {
   const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isWidgetStudioOpen, setIsWidgetStudioOpen] = useState(false);
+
+  // iOS Task-List-Only Widget Mode (triggered via ?widget=small|medium|large or in-app launcher)
+  const [widgetModeSize, setWidgetModeSize] = useState<WidgetSize | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    const w = params.get('widget')?.toLowerCase();
+    if (w === 'small' || w === 'medium' || w === 'large') {
+      return w;
+    }
+    return null;
+  });
+
+  const handleSetWidgetMode = useCallback((size: WidgetSize | null) => {
+    setWidgetModeSize(size);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (size) {
+        url.searchParams.set('widget', size);
+      } else {
+        url.searchParams.delete('widget');
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
 
   // Focus Timer linked task
   const [activeFocusTaskId, setActiveFocusTaskId] = useState<string | null>(
@@ -493,6 +522,32 @@ export default function App() {
   };
 
   // Quick Add Task inline
+  const handleWidgetQuickAdd = (title: string, priority: PriorityLevel) => {
+    if (!title.trim()) return;
+    const newTask: TaskItem = {
+      clientId: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: title.trim(),
+      notes: '',
+      category: 'Personal',
+      priority,
+      position: 0,
+      completed: false,
+      dueDate: getTodayStr(),
+      reminderTime: '',
+      recurrence: 'none',
+      estimatedPomodoros: 1,
+      completedPomodoros: 0,
+      updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+    const reindexed = [newTask, ...tasks].map((item, idx) => ({
+      ...item,
+      position: idx,
+    }));
+    setTasks(reindexed);
+    syncWithBackend(reindexed, sessions, false);
+  };
+
   const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickTitle.trim()) return;
@@ -693,6 +748,20 @@ export default function App() {
     return 'Low Priority';
   };
 
+  // Dedicated Task-List-Only iOS Widget Form when launched via ?widget=small|medium|large
+  if (widgetModeSize) {
+    return (
+      <IOSWidgetStandalone
+        initialSize={widgetModeSize}
+        tasks={tasks}
+        onToggleComplete={handleToggleComplete}
+        onQuickAdd={handleWidgetQuickAdd}
+        onExitWidgetMode={() => handleSetWidgetMode(null)}
+        onChangeSize={(nextSize) => handleSetWidgetMode(nextSize)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-24 md:pb-12">
       {/* Top Bar Contract: Zone 1 (Single Brand Title) — Zone 2 (Nav Links) — Zone 3 (1-2 Actions) */}
@@ -750,6 +819,12 @@ export default function App() {
             }`}
           >
             Focus Timer
+          </button>
+          <button
+            onClick={() => setIsWidgetStudioOpen(true)}
+            className="py-1 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap cursor-pointer"
+          >
+            iOS Widgets
           </button>
           <button
             onClick={() => setIsBackupModalOpen(true)}
@@ -850,6 +925,14 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setIsWidgetStudioOpen(true)}
+              className="min-h-[44px] flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <LayoutGrid className="w-4 h-4 text-sky-500 shrink-0" />
+              <span>iOS Widgets (3 Sizes)</span>
+            </button>
+
             <button
               onClick={() => setIsBackupModalOpen(true)}
               className="min-h-[44px] flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
@@ -1249,7 +1332,7 @@ export default function App() {
       {/* Mobile Fixed Bottom Thumb-Zone Navigation Bar (10_mobile_touch_apps.md Pattern 1) */}
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-4 items-center px-2"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-5 items-center px-2"
       >
         <button
           onClick={() => setActiveView('all')}
@@ -1288,6 +1371,14 @@ export default function App() {
         </button>
 
         <button
+          onClick={() => setIsWidgetStudioOpen(true)}
+          className="min-h-[44px] flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 cursor-pointer"
+        >
+          <LayoutGrid className="w-5 h-5" />
+          <span className="text-[10px] font-medium tracking-tight mt-0.5">Widgets</span>
+        </button>
+
+        <button
           onClick={() => setIsBackupModalOpen(true)}
           className="min-h-[44px] flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 cursor-pointer"
         >
@@ -1297,6 +1388,15 @@ export default function App() {
       </nav>
 
       {/* Modals & Sheets */}
+      <IOSWidgetStudioModal
+        isOpen={isWidgetStudioOpen}
+        onClose={() => setIsWidgetStudioOpen(false)}
+        tasks={tasks}
+        userUid={user ? user.uid : null}
+        onToggleComplete={handleToggleComplete}
+        onQuickAdd={handleWidgetQuickAdd}
+        onLaunchWidgetMode={(size) => handleSetWidgetMode(size)}
+      />
       <TaskSheetModal
         isOpen={isTaskSheetOpen}
         onClose={() => {

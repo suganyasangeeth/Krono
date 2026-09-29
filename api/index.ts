@@ -1,14 +1,26 @@
 import express from 'express';
-import { requireAuth, AuthRequest } from '../src/middleware/auth.ts';
+import { requireAuth, type AuthRequest } from '../src/middleware/auth.ts';
 import {
   getUserTasksAndSessions,
   syncUserTasksAndSessions,
   deleteUserTaskByClientId,
+  getWidgetTasksByUid,
 } from '../src/db/tasks.ts';
 
 const app = express();
 
 app.use(express.json({ limit: '5mb' }));
+
+app.get('/api/widget', async (req, res) => {
+  try {
+    const uid = String(req.query.uid || '');
+    const data = await getWidgetTasksByUid(uid);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to load widget tasks' });
+  }
+});
 
 app.get('/api/tasks', requireAuth, async (req: AuthRequest, res) => {
   try {

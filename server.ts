@@ -2,11 +2,12 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import * as dotenv from 'dotenv';
-import { requireAuth, AuthRequest } from './src/middleware/auth.ts';
+import { requireAuth, type AuthRequest } from './src/middleware/auth.ts';
 import {
   getUserTasksAndSessions,
   syncUserTasksAndSessions,
   deleteUserTaskByClientId,
+  getWidgetTasksByUid,
 } from './src/db/tasks.ts';
 
 dotenv.config();
@@ -16,6 +17,18 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json({ limit: '5mb' }));
+
+  // Lightweight iOS Home Screen Widget JSON Feed
+  app.get('/api/widget', async (req, res) => {
+    try {
+      const uid = String(req.query.uid || '');
+      const data = await getWidgetTasksByUid(uid);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to load widget tasks' });
+    }
+  });
 
   // Fetch user's persisted tasks & focus sessions
   app.get('/api/tasks', requireAuth, async (req: AuthRequest, res) => {

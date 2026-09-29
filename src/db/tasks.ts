@@ -140,3 +140,26 @@ export async function deleteUserTaskByClientId(uid: string, email: string, clien
     throw new Error('Database query failed. Please try again later.', { cause: error });
   }
 }
+
+export async function getWidgetTasksByUid(uid: string) {
+  try {
+    if (!uid) return { tasks: [] };
+    const existing = await db.select().from(users).where(eq(users.uid, uid));
+    if (!existing.length) {
+      return { tasks: [] };
+    }
+    const userTasks = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.userId, existing[0].id))
+      .orderBy(asc(tasks.position), desc(tasks.createdAt));
+
+    return {
+      tasks: userTasks,
+      updatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Database query failed in getWidgetTasksByUid:', error);
+    return { tasks: [] };
+  }
+}
