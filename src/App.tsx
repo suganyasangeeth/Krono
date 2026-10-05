@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus,
   GripVertical,
@@ -238,6 +238,32 @@ export default function App() {
   const [viewingTask, setViewingTask] = useState<TaskItem | null>(null);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isWidgetStudioOpen, setIsWidgetStudioOpen] = useState(false);
+
+  // In-app Long-Press / Haptic Touch to open iOS Widget Studio
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressRef = useRef(false);
+
+  const handleLogoPressStart = useCallback(() => {
+    isLongPressRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(50);
+        } catch {
+          // ignore
+        }
+      }
+      setIsWidgetStudioOpen(true);
+    }, 450);
+  }, []);
+
+  const handleLogoPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   // iOS Task-List-Only Widget Mode (triggered via ?widget=..., #widget-..., or persisted localStorage)
   const [widgetModeSize, setWidgetModeSize] = useState<WidgetSize | null>(() => {
@@ -843,21 +869,43 @@ export default function App() {
     <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-32 md:pb-12">
       {/* Top Bar Contract: Safe-Area Top Inset for iPhone 11 Notch */}
       <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 pt-[max(env(safe-area-inset-top),0.65rem)] pb-2.5 min-h-[60px] flex items-center justify-between gap-2">
-        {/* Zone 1: Brand logo and wordmark (Clearly visible below iPhone notch) */}
+        {/* Zone 1: Brand logo and wordmark (Clearly visible below iPhone notch; Click for All Tasks, Hold for iOS Widget) */}
         <a
           href="#top"
+          onMouseDown={handleLogoPressStart}
+          onMouseUp={handleLogoPressEnd}
+          onMouseLeave={handleLogoPressEnd}
+          onTouchStart={handleLogoPressStart}
+          onTouchEnd={handleLogoPressEnd}
+          onTouchCancel={handleLogoPressEnd}
+          onContextMenu={(e) => {
+            // Prevent context menu on long-press so widget modal opens smoothly
+            if (isLongPressRef.current) {
+              e.preventDefault();
+            }
+          }}
           onClick={(e) => {
             e.preventDefault();
+            if (isLongPressRef.current) {
+              isLongPressRef.current = false;
+              return;
+            }
             setActiveView('all');
           }}
-          className="flex items-center gap-2.5 text-2xl font-bold tracking-tight font-display text-slate-900 dark:text-white shrink-0 group cursor-pointer"
+          className="flex items-center gap-2.5 text-2xl font-bold tracking-tight font-display text-slate-900 dark:text-white shrink-0 group cursor-pointer select-none active:scale-95 transition-transform"
+          title="Click: All Tasks • Press & Hold: iOS Widget View"
         >
           <img
             src="/icon.svg"
             alt="Krono Logo"
             className="w-8 h-8 rounded-xl object-contain shadow-xs shrink-0 group-hover:scale-105 transition-transform"
           />
-          <span>Krono</span>
+          <div className="flex flex-col">
+            <span className="leading-tight">Krono</span>
+            <span className="text-[9px] font-mono font-medium text-slate-400 dark:text-slate-500 hidden sm:block -mt-0.5">
+              Hold for Widget
+            </span>
+          </div>
         </a>
 
         {/* Zone 2: Clean Text Navigation Links */}

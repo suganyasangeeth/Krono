@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
   <defs>
-    <linearGradient id="wineGradSq" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="wineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#7B1126"/>
       <stop offset="50%" stop-color="#5A0B1A"/>
       <stop offset="100%" stop-color="#2C040B"/>
     </linearGradient>
-    <linearGradient id="goldRingSq" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#F8DB80"/>
       <stop offset="45%" stop-color="#E0B04E"/>
       <stop offset="100%" stop-color="#9A6B1E"/>
     </linearGradient>
-    <linearGradient id="goldKSq" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="goldK" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#FFE9A0"/>
       <stop offset="100%" stop-color="#E9BE58"/>
     </linearGradient>
-    <filter id="softShadowSq" x="-20%" y="-20%" width="140%" height="140%">
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
       <feOffset dx="0" dy="6" result="offsetblur"/>
       <feComponentTransfer>
@@ -28,19 +28,24 @@
     </filter>
   </defs>
 
-  <!-- Wine Tile Squircle -->
-  <rect width="512" height="512" rx="115" fill="url(#wineGradSq)"/>
+  <!-- Full-bleed wine background for iOS (Apple automatically applies squircle mask) -->
+  <rect width="512" height="512" fill="url(#wineGrad)"/>
 
-  <!-- Golden Mark with soft shadow -->
-  <g filter="url(#softShadowSq)">
+  <!-- Golden Mark centered with balanced safe margins -->
+  <g filter="url(#softShadow)">
+    <!-- Ring Arc (starts 160 deg, sweeps through 6:00, 3:00, 12:00 to 290 deg) -->
     <path d="M 113.1 308.0 A 152 152 0 1 0 308.0 113.1"
-          stroke="url(#goldRingSq)" stroke-width="26" stroke-linecap="round"/>
-    <circle cx="148.5" cy="148.5" r="18" fill="url(#goldRingSq)"/>
+          stroke="url(#goldRing)" stroke-width="26" stroke-linecap="round"/>
+
+    <!-- Detached Orbit Dot at 10:30 (approx 225 deg) -->
+    <circle cx="148.5" cy="148.5" r="18" fill="url(#goldRing)"/>
+
+    <!-- Central Letter K -->
     <path d="M 218 186 L 218 326"
-          stroke="url(#goldKSq)" stroke-width="26" stroke-linecap="round"/>
+          stroke="url(#goldK)" stroke-width="26" stroke-linecap="round"/>
     <path d="M 224 256 L 298 188"
-          stroke="url(#goldKSq)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+          stroke="url(#goldK)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M 224 256 L 304 324"
-          stroke="url(#goldKSq)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+          stroke="url(#goldK)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

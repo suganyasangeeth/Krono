@@ -535,20 +535,36 @@ Script.complete();`;
             />
           </div>
 
-          {/* Why iOS Long-Press Needs One of These 3 Options */}
-          <div className="space-y-3">
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Note on iPhone: Apple restricts Safari web apps from showing the native App Store widget size picker when long-pressing an icon. Use any of these 3 ways to get your Task-List Widget on iPhone:
-            </p>
+          {/* iOS Long-Press & Widget Explanation Callout */}
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 dark:text-amber-200 space-y-2">
+            <div className="flex items-start gap-2.5">
+              <span className="p-1 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                <Smartphone className="w-4 h-4" />
+              </span>
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                  Why doesn&apos;t long-holding the app icon on iOS show the widget picker?
+                </h4>
+                <p className="text-xs sm:text-sm text-amber-900/80 dark:text-amber-200/90 leading-relaxed">
+                  Apple&apos;s iOS strictly restricts native Home Screen interactive widgets (WidgetKit) to native App Store apps. PWAs installed through Safari cannot automatically inject widget size pickers into the iOS Haptic Touch home-screen menu.
+                </p>
+                <p className="text-xs sm:text-sm font-medium text-amber-900/90 dark:text-amber-200 leading-relaxed">
+                  To get your Krono Widget on iPhone, use any of these 4 supported solutions below:
+                </p>
+              </div>
+            </div>
+          </div>
 
+          {/* Supported Ways to use Krono Widgets on iOS */}
+          <div className="space-y-3">
             {/* Way 1: Full-Screen Task-List Widget Mode */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Share className="w-4 h-4 text-sky-500 shrink-0" />
-                <span>Option 1: Pin Task-List-Only Widget Icon to Home Screen</span>
+                <span>1. Pin 1-Tap Widget Mode to iPhone Home Screen</span>
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Tap below to switch Krono into <strong>Task-List-Only Widget Mode</strong>, then tap <strong>Safari Share → Add to Home Screen</strong> to add a dedicated widget icon that opens straight to your task list.
+                Tap below to open <strong>{previewSize.toUpperCase()} Widget Mode</strong>, then tap <strong>Safari Share → Add to Home Screen</strong>. This creates a dedicated home screen icon that opens straight into your task list widget card.
               </p>
               <button
                 onClick={() => {
@@ -562,32 +578,14 @@ Script.complete();`;
               </button>
             </div>
 
-            {/* Way 2: Built-In iPhone Reminders / Calendar Native Widget */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
-                <span>Option 2: Sync to Built-In iPhone Home Screen Widget (.ics)</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Send your tasks to your iPhone&apos;s built-in <strong>Apple Calendar / Reminders Widget</strong> (which supports long-pressing on your iPhone Home Screen to resize between Small, Medium, and Large!).
-              </p>
-              <button
-                onClick={() => exportAppleRemindersICS(tasks)}
-                className="min-h-[46px] w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                <Calendar className="w-4 h-4 text-indigo-500" />
-                <span>Export to iPhone Native Widget (.ics)</span>
-              </button>
-            </div>
-
-            {/* Way 3: Custom Scriptable Native iOS Home Screen Widget */}
+            {/* Way 2: Real Native iOS Home Screen Widget via Scriptable */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Smartphone className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Option 3: Live Custom iPhone Wallpaper Widget (Scriptable)</span>
+                <span>2. Real Native iOS Wallpaper Widget (Scriptable)</span>
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Copy this pre-configured script into the free <strong>Scriptable</strong> app on iOS, then long-press your iPhone Home Screen → tap <strong>+</strong> → add Scriptable in Small, Medium, or Large size.
+                Want a real widget living on your iPhone wallpaper alongside your native iOS widgets? Copy this script into the free <strong>Scriptable</strong> iOS app, then long-press your iPhone wallpaper → tap <strong>+</strong> → add Scriptable widget in Small, Medium, or Large size.
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -605,6 +603,35 @@ Script.complete();`;
                   <Download className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+
+            {/* Way 3: In-App Long-Press Gesture */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <LayoutGrid className="w-4 h-4 text-sky-500 shrink-0" />
+                <span>3. In-App Long-Press on Krono Logo</span>
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                Inside the Krono app, simply <strong>press and hold (long-press)</strong> the Krono brandmark logo in the top-left header for 450ms. It triggers a haptic vibration and pops open the Widget Studio directly!
+              </p>
+            </div>
+
+            {/* Way 4: Apple Reminders / Calendar Widget Sync */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+                <span>4. Sync to Apple Reminders / Calendar Widget (.ics)</span>
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                Export your tasks to iOS Calendar / Reminders. iOS Reminders has a built-in home screen widget that supports long-press resizing.
+              </p>
+              <button
+                onClick={() => exportAppleRemindersICS(tasks)}
+                className="min-h-[46px] w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <Calendar className="w-4 h-4 text-indigo-500" />
+                <span>Export to iPhone Native Reminders Widget (.ics)</span>
+              </button>
             </div>
           </div>
         </div>
