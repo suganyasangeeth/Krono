@@ -11,15 +11,22 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['apple-touch-icon.png', 'icon.svg'],
+        includeAssets: [
+          'apple-touch-icon.png',
+          'icon.svg',
+          'favicon.svg',
+          'favicon.ico',
+          'icons/*.png',
+          'icons/*.svg',
+        ],
         manifest: {
           id: '/',
           name: 'Krono — Offline PWA Task & Focus Planner',
           short_name: 'Krono',
           description:
             'Intuitive offline-first PWA to-do list with drag-and-drop task prioritization, dark mode, automated recurring task reminders, Pomodoro focus timer, and Google Drive & iCloud backup.',
-          theme_color: '#0f172a',
-          background_color: '#0f172a',
+          theme_color: '#5A0B1A',
+          background_color: '#2C040B',
           display: 'standalone',
           start_url: '/',
           scope: '/',

@@ -843,16 +843,21 @@ export default function App() {
     <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-32 md:pb-12">
       {/* Top Bar Contract: Safe-Area Top Inset for iPhone 11 Notch */}
       <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 pt-[max(env(safe-area-inset-top),0.65rem)] pb-2.5 min-h-[60px] flex items-center justify-between gap-2">
-        {/* Zone 1: Single text element wordmark (Clearly visible below iPhone notch) */}
+        {/* Zone 1: Brand logo and wordmark (Clearly visible below iPhone notch) */}
         <a
           href="#top"
           onClick={(e) => {
             e.preventDefault();
             setActiveView('all');
           }}
-          className="text-2xl font-bold tracking-tight font-display text-slate-900 dark:text-white shrink-0"
+          className="flex items-center gap-2.5 text-2xl font-bold tracking-tight font-display text-slate-900 dark:text-white shrink-0 group cursor-pointer"
         >
-          Krono
+          <img
+            src="/icon.svg"
+            alt="Krono Logo"
+            className="w-8 h-8 rounded-xl object-contain shadow-xs shrink-0 group-hover:scale-105 transition-transform"
+          />
+          <span>Krono</span>
         </a>
 
         {/* Zone 2: Clean Text Navigation Links */}

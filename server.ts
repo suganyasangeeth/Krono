@@ -77,6 +77,9 @@ async function startServer() {
     }
   });
 
+  // Serve public directory assets directly (favicons, icons, splash)
+  app.use(express.static(path.join(process.cwd(), 'public')));
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
